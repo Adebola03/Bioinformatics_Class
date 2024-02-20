@@ -1,0 +1,266 @@
+---
+title: "R_Day2"
+author: "Adebola Agboola"
+date: "2024-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#This is what a chunk looks like
+```{r}
+plot(1:10)
+
+
+```
+
+###################################
+# 1.2 Get to know the data
+###################################
+# Read in the data
+```{r}
+# Read in the two files
+dat_1 = read.csv("RNAseq_Data_1.csv")
+dat_2 = read.csv("RNAseq_Data_2.csv")
+
+# Look at the head() of each data set
+head(dat_1)
+head(dat_2)
+```
+
+# Challenge Question
+# What do you observe when you look at dat_1?
+#Upon looking at the data above,it look like data attained from genes of specific chromosomes. The table shows various important parts like the gene length start and end and so on.
+
+# What do you observe when you look at dat_2?
+#dat_2 looks at the same gens as the dat_1 however it compares DL instead of the BC in dat_1.
+
+
+# Let's look at the dimensions and column names of dat_1
+```{r}
+# This function tells you the number of rows and columns
+dim(dat_1)
+
+# The function prints the names of each of the columns
+colnames(dat_1)
+```
+
+###################################
+# 2.3 Try out different tables
+##################################
+# Summary function
+```{r}
+# Summarize Sample BC_1_RPKM in dat_1
+summary(dat_1$BC_1_fpkm)
+
+# Summarize the Gene Length in dat_1
+summary(dat_1$GeneLength)
+```
+
+# Table
+```{r}
+# Count the number of chromosomes are represented in the data
+table(dat_1$Chrom)
+
+# Count the number of gene types
+table(dat_1$GeneType)
+```
+# Summarise
+```{r}
+# Load the appropriate packages that are not built into R
+library(dplyr)
+
+# Summarize the gene length by chromosome
+summary_data1 <- dat_1 %>%
+  group_by(Chrom) %>%
+  summarise(mean_geneLength = mean(GeneLength), sum_geneLength = sum(GeneLength))
+
+summary_data1
+
+
+# Summarize the gene length by GeneType
+summary_data2 <- dat_1 %>%
+  group_by(GeneType) %>%
+  summarise(mean_geneLength = mean(GeneLength), sum_geneLength = sum(GeneLength))
+
+summary_data2
+```
+# Summarize the gene length by Chromosome for dat_1
+# Calculate the average gene length, total gene length, median gene length, and max gene length
+```{r}
+stat_data1 <- dat_1 %>%
+  group_by(Chrom) %>%
+  summarise(mean_geneLength = mean(GeneLength), sum_geneLength = sum(GeneLength), median_genelength = median(GeneLength), max_genelength = max(GeneLength))
+
+stat_data1
+```
+
+
+# Join both dat_1 and dat_2 tables together
+```{r}
+# Join data using left_join()
+dat_joined_left = left_join(dat_1, dat_2, by = c("geneID","GeneName","Chrom","Strand", "Start","End","GeneLength", "GeneType", "GeneDescription"))
+
+# Join data using inner_join()
+dat_joined_inner = inner_join(dat_1, dat_2, by = c("geneID","GeneName","Chrom","Strand", "Start","End","GeneLength", "GeneType", "GeneDescription"))
+
+# Look at the column names of the data dat_joined_inner
+colnames(dat_joined_inner)
+# Reorganize data so GeneType and GeneDescripton is at the end of the table
+dat_joined_inner = dat_joined_inner[,c(1:13,16:21,14:15)]
+
+head(dat_joined_inner)
+```
+# Put it all together
+```{r}
+# Make a new dataset
+dat_new = dat_joined_inner
+
+# Calculate the mean of experiment BC
+dat_new$BC_fpkm_average = rowMeans(dat_new[,c(8:10)])
+
+# Calculate the standard deviation of BC using the apply() function
+dat_new$BC_fpkm_sd = apply(dat_new[,c(8:10)], 1, sd)
+
+# Calculate the mean of experiment BC_DOX
+dat_new$BC_DOX_fpkm_average = rowMeans(dat_new[,c(11:13)])
+# Calculate the standard deviation of BC_DOX
+dat_new$BC_DOX_fpkm_sd = apply(dat_new[,c(11:13)], 1, sd)
+# Calculate the mean of experiment DL
+dat_new$DL_fpkm_average = rowMeans(dat_new[,c(14:16)])
+# Calculate the standard deviation of DL
+dat_new$DL_fpkm_sd = apply(dat_new[,c(14:16)], 1, sd)
+# Calculate the mean of experiment DL_DOX
+dat_new$DL_DOX_fpkm_average = rowMeans(dat_new[,c(17:19)])
+# Calculate the standard deviation of DL_DOX
+dat_new$DL_DOX_fpkm_sd = apply(dat_new[,c(17:19)], 1, sd)
+head(dat_new)
+```
+
+# Now save your data to a csv file and download it to your files
+```{r}
+write.csv(dat_new, "my_analysis.csv")
+```
+
+###################################
+# STEP 3 GGPLOT
+###################################
+
+# 3.1 GGplot Training challenge
+# 3.2 GGplot more in-depth walk-though
+
+
+
+#######################################
+# 3.2 GGplot more in-depth walk-though
+#######################################
+
+```{r}
+# Load the tidyverse library
+library(tidyverse)
+# Load the ggplot2 library
+library(ggplot2)
+
+# Create a sample data frame
+data <- data.frame(
+  Group = rep(c("A", "B", "C", "D"), each = 20),
+  Value = rnorm(80)
+)
+
+# Create the boxplot
+ggplot(data, aes(x = Group, y = Value)) +
+  geom_boxplot() +
+  xlab("Group") +
+  ylab("Value") +
+  ggtitle("Boxplot of Values by Group")
+```
+
+# Get your data for the Genes_FPKM.csv file into R
+```{r}
+# Read in the Genes_FPKM.csv file and assign it to the object Genes
+Genes = read.csv("Genes_FPKM.csv") 
+# What are the number of rows and columns in this dataset?
+dim(Genes)
+# What type of data is this (matrix or dataframe)?
+class(Genes) 
+#This is a dataframe.
+# Look at the top 6 rows of the dataset
+head(Genes)
+
+```
+# Challenge question
+# What do you think this data is showing?
+#This data show the expression of GAPDH and H19 and the experiments are done in triplicates.
+
+# Create GAPDH boxplot
+```{r}
+# Load the ggplot2 library
+library(ggplot2)
+
+# Add color pallete
+install.packages('palettetown')
+library(palettetown)
+# https://github.com/timcdlucas/palettetown
+
+# Make colors!
+my_colors <- pokepal(pokemon = 137, spread = 4)
+
+
+# Create the boxplot
+ggplot(Genes, aes(x = Experiment.Group, y = GAPDH_FPKM, fill = Experiment.Group)) +
+  geom_boxplot() +
+  xlab("Group") +
+  ylab("GAPDH_FPKM") +
+  scale_fill_manual(values = my_colors) +
+  ggtitle("FPKM of GAPDH")
+
+t.test(Genes[7:12,2])
+```
+# Challenge question
+# What do you think each element of the ggplot code does?
+# ggplot(Genes, aes(x = Experiment.Group, y = GAPDH_FPKM, fill = Experiment.Group)) +
+#This part identifies the dataset that the ggplot will use as well as what the x and y axis are
+
+#  geom_boxplot() +
+# This just states what type of boxplot to be used.
+
+#  xlab("Group") +
+#Thus is the label for the x axis
+
+#  ylab("GAPDH_FPKM") +
+#This is the lable for the y axis
+
+#  scale_fill_manual(values = my_colors) +
+#This is assigning the colors to be used in the plot
+
+#  ggtitle("FPKM of GAPDH")
+#This is the title of the entire plot.
+
+# Create H19 boxplot
+# Be sure to include appropriate comments and code
+# Use different colors than for the GAPDH plot
+```{r}
+my_colors <- pokepal(pokemon = 32, spread = 4)
+
+
+# Create the boxplot
+ggplot(Genes, aes(x = Experiment.Group, y = H19_FPKM, fill = Experiment.Group)) +
+  geom_boxplot() +
+  xlab("Group") +
+  ylab("H19_FPKM") +
+  scale_fill_manual(values = my_colors) +
+  ggtitle("FPKM of H19")
+
+
+
+
+```
+
+# Challenge question
+# Describe what each plot is showing
+#Each plot is showing the expression of the specific protien with different experimental groups.
+
+# Compare the two plots to eachother, what is similar and what is different?
+#The two plots shows opposite expressions for H19 and GAPDH for BC and DL. It also seems like one is the control.
